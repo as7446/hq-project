@@ -6,7 +6,7 @@ WORKDIR /src
 RUN apk add --no-cache ca-certificates git tzdata
 
 COPY go.mod ./
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
+RUN  go mod download
 
 COPY . .
 ARG VERSION=dev
