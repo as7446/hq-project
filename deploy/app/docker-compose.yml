@@ -1,0 +1,40 @@
+services:
+  hq-project-demo:
+    image: ${IMAGE:-registry.cn-hangzhou.aliyuncs.com/gowellgo/hq-project-demo:latest}
+    container_name: hq-project-demo
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: ${SERVICE_NAME:-hq-project-demo}
+      APP_ENV: ${APP_ENV:-prod}
+      PORT: ${PORT:-8080}
+      JOB_NAME: ${JOB_NAME:-manual}
+      BUILD_NUMBER: ${BUILD_NUMBER:-0}
+      BUILD_URL: ${BUILD_URL:-}
+      GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    ports:
+      - "${APP_LISTEN:-127.0.0.1:8080}:8080"
+    labels:
+      logging: "promtail"
+      logging_jobname: "hq-project-demo"
+      app: "hq-project-demo"
+      env: "${APP_ENV:-prod}"
+    healthcheck:
+      test: ["CMD", "/app/hq-project", "--healthcheck"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    networks:
+      - observability
+
+networks:
+  observability:
+    external: true
+

@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+deploy
+scripts
+README.md
+Dockerfile
+Jenkinsfile
+*.log
+tmp
+coverage.out
+

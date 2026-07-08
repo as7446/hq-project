@@ -1,0 +1,90 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: ops-nginx
+    restart: unless-stopped
+    depends_on:
+      - jenkins
+      - grafana
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - observability
+
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    container_name: ops-jenkins
+    restart: unless-stopped
+    user: root
+    environment:
+      JENKINS_OPTS: --prefix=/
+      JAVA_OPTS: >-
+        -Djenkins.install.runSetupWizard=true
+        -Djava.awt.headless=true
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
+    networks:
+      - observability
+    labels:
+      logging: "promtail"
+      logging_jobname: "jenkins"
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: ops-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - observability
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    container_name: ops-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - observability
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: ops-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-ChangeMe_123456}
+      GF_SERVER_ROOT_URL: https://grafana.gowellgo.top/
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - observability
+    labels:
+      logging: "promtail"
+      logging_jobname: "grafana"
+
+volumes:
+  jenkins_home:
+  loki_data:
+  grafana_data:
+
+networks:
+  observability:
+    name: observability
+
