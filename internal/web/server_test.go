@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// 1
 func TestIndexShowsBuildVersion(t *testing.T) {
 	cfg := Config{
 		ServiceName: "demo",
