@@ -101,6 +101,7 @@ func (s *Server) handleLogSubmit(w http.ResponseWriter, r *http.Request) {
 		"environment", s.cfg.Environment,
 		"remote_addr", r.RemoteAddr,
 		"message", message,
+		"role", "devops",
 	)
 
 	http.Redirect(w, r, "/?submitted=1", http.StatusSeeOther)
